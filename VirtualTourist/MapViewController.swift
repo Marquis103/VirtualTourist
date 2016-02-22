@@ -27,6 +27,11 @@ class MapViewController: UIViewController {
 		super.viewDidLoad()
 		
 		mapView.delegate = self
+		
+		//add long press gesture for pins
+		let longPressGesture = UILongPressGestureRecognizer(target: self, action: "addPinToMap:")
+		longPressGesture.minimumPressDuration = 2
+		mapView.addGestureRecognizer(longPressGesture)
 	}
 	
 	override func viewWillAppear(animated: Bool) {
@@ -45,6 +50,16 @@ class MapViewController: UIViewController {
 		super.didReceiveMemoryWarning()
 		// Dispose of any resources that can be recreated.
 	}
+	
+	//MARk: Map Functions
+	func addPinToMap(longPressGesture:UILongPressGestureRecognizer) {
+		if longPressGesture.state == .Began {
+			let pin = MKPointAnnotation()
+			let touchCoord = longPressGesture.locationInView(mapView)
+			pin.coordinate = mapView.convertPoint(touchCoord, toCoordinateFromView: mapView)
+			mapView.addAnnotation(pin)
+		}
+	}
 }
 
 extension MapViewController : MKMapViewDelegate {
@@ -56,6 +71,13 @@ extension MapViewController : MKMapViewDelegate {
 		mapSettings["longitude"] = mapView.centerCoordinate.longitude
 		
 		NSKeyedArchiver.archiveRootObject(mapSettings, toFile: mapSettingsPath)
+	}
+	
+	func mapView(mapView: MKMapView, viewForAnnotation annotation: MKAnnotation) -> MKAnnotationView? {
+		let pinView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: nil)
+		pinView.animatesDrop = true
+		
+		return pinView
 	}
 }
 
