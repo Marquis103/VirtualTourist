@@ -13,7 +13,11 @@ class MapViewController: UIViewController {
 
 	@IBOutlet weak var mapView: MKMapView!
 	
+	@IBOutlet weak var editButton: UIBarButtonItem!
 	var mapSettings =  [String:AnyObject]()
+	var deleteButton:UIButton!
+	var isMapEditing = false
+	var buttonHeight:CGFloat = 0.0
 	
 	var mapSettingsPath: String {
 		let manager = NSFileManager.defaultManager()
@@ -22,11 +26,29 @@ class MapViewController: UIViewController {
 		return url.URLByAppendingPathComponent("mapset").path!
 	}
 	
+	@IBAction func editPins(sender: UIBarButtonItem) {
+		isMapEditing = !isMapEditing
+		
+		if isMapEditing {
+			editButton.title = "Done"
+			adjustMapHeight(true)
+		} else {
+			editButton.title = "Edit"
+			adjustMapHeight(false)
+		}
+	}
+	
+	//percentage of height for delete button in any orientation
+	var buttonHeightConstant:CGFloat = 0.096
+	
 	//MARK: View Controller Life Cycle
 	override func viewDidLoad() {
 		super.viewDidLoad()
 		
 		mapView.delegate = self
+		
+		//create delete pin button
+		setupDeleteButton()
 		
 		//add long press gesture for pins
 		let longPressGesture = UILongPressGestureRecognizer(target: self, action: "addPinToMap:")
@@ -51,7 +73,46 @@ class MapViewController: UIViewController {
 		// Dispose of any resources that can be recreated.
 	}
 	
-	//MARk: Map Functions
+	//MARK: Functions
+	func adjustMapHeight(buttonOnScreen:Bool) {
+		buttonHeight = buttonHeightConstant * CGRectGetMaxY(view.bounds)
+		
+		if buttonOnScreen {
+			self.deleteButton.hidden = !buttonOnScreen
+			
+			UIView.animateWithDuration(0.7, animations: { () -> Void in
+				self.mapView.frame.origin.y -= self.buttonHeight
+				self.deleteButton.frame.origin.y -=  self.buttonHeight
+			})
+			
+		} else {
+			UIView.animateWithDuration(0.7, animations: { () -> Void in
+				self.mapView.frame.origin.y = 0
+				self.deleteButton.frame.origin.y = CGRectGetMaxY(self.view.bounds)
+				}, completion: { (complete) -> Void in
+					self.deleteButton.hidden = !buttonOnScreen
+			})
+		}
+	}
+	
+	override func willAnimateRotationToInterfaceOrientation(toInterfaceOrientation: UIInterfaceOrientation, duration: NSTimeInterval) {
+		buttonHeight = buttonHeightConstant * CGRectGetMaxY(view.bounds)
+		let buttonOriginY = (deleteButton.hidden) ? CGRectGetMaxY(view.bounds) : CGRectGetMaxY(view.bounds) - buttonHeight
+		deleteButton.frame = CGRect(x: 0, y: buttonOriginY, width: view.bounds.size.width, height: buttonHeight)
+	}
+	
+	func setupDeleteButton() {
+		deleteButton = UIButton()
+		deleteButton.hidden = true
+		buttonHeight = buttonHeightConstant * CGRectGetMaxY(view.bounds)
+		deleteButton.frame = CGRect(x: 0, y: CGRectGetMaxY(view.bounds), width: view.bounds.size.width, height: buttonHeightConstant * CGRectGetMaxY(view.bounds))
+		deleteButton.backgroundColor = UIColor.redColor()
+		deleteButton.setTitle("Tap Pins to Delete!", forState: .Normal)
+		
+		view.addSubview(deleteButton)
+	}
+	
+	//MARK: Map Functions
 	func addPinToMap(longPressGesture:UILongPressGestureRecognizer) {
 		if longPressGesture.state == .Began {
 			let pin = MKPointAnnotation()
@@ -78,6 +139,10 @@ extension MapViewController : MKMapViewDelegate {
 		pinView.animatesDrop = true
 		
 		return pinView
+	}
+	
+	func mapView(mapView: MKMapView, didSelectAnnotationView view: MKAnnotationView) {
+		print("we tapped it")
 	}
 }
 

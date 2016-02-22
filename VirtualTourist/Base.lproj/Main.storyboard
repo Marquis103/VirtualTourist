@@ -30,9 +30,14 @@
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Virtual Tourist" id="X07-9f-Tfk">
-                        <barButtonItem key="rightBarButtonItem" title="Edit" id="iwH-dj-KRD"/>
+                        <barButtonItem key="rightBarButtonItem" title="Edit" id="a9B-yV-NpR">
+                            <connections>
+                                <action selector="editPins:" destination="BYZ-38-t0r" id="C5e-dq-Ijt"/>
+                            </connections>
+                        </barButtonItem>
                     </navigationItem>
                     <connections>
+                        <outlet property="editButton" destination="a9B-yV-NpR" id="oRn-2e-Dsg"/>
                         <outlet property="mapView" destination="OTy-0b-rnq" id="kcO-DM-G2i"/>
                     </connections>
                 </viewController>
