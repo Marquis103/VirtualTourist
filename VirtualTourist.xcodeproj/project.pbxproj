@@ -13,6 +13,13 @@
 		F4B1176D1C7AAE6400839896 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = F4B1176C1C7AAE6400839896 /* Assets.xcassets */; };
 		F4B117701C7AAE6400839896 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = F4B1176E1C7AAE6400839896 /* LaunchScreen.storyboard */; };
 		F4B117781C7AAE7800839896 /* MapKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4B117771C7AAE7800839896 /* MapKit.framework */; };
+		F4B1177B1C7BA93C00839896 /* CoreDataStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B1177A1C7BA93C00839896 /* CoreDataStack.swift */; };
+		F4B1177F1C7BAC4100839896 /* pinPhotos.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = F4B1177D1C7BAC4100839896 /* pinPhotos.xcdatamodeld */; };
+		F4B117841C7BD4DA00839896 /* Pin+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B117801C7BD4DA00839896 /* Pin+CoreDataProperties.swift */; };
+		F4B117851C7BD4DA00839896 /* Pin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B117811C7BD4DA00839896 /* Pin.swift */; };
+		F4B117861C7BD4DA00839896 /* Photo+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B117821C7BD4DA00839896 /* Photo+CoreDataProperties.swift */; };
+		F4B117871C7BD4DA00839896 /* Photo.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B117831C7BD4DA00839896 /* Photo.swift */; };
+		F4B1178A1C7C07F500839896 /* PinAnnotation.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B117891C7C07F400839896 /* PinAnnotation.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -24,6 +31,13 @@
 		F4B1176F1C7AAE6400839896 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		F4B117711C7AAE6400839896 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		F4B117771C7AAE7800839896 /* MapKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MapKit.framework; path = System/Library/Frameworks/MapKit.framework; sourceTree = SDKROOT; };
+		F4B1177A1C7BA93C00839896 /* CoreDataStack.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDataStack.swift; sourceTree = "<group>"; };
+		F4B1177E1C7BAC4100839896 /* pinPhotos.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = pinPhotos.xcdatamodel; sourceTree = "<group>"; };
+		F4B117801C7BD4DA00839896 /* Pin+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Pin+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		F4B117811C7BD4DA00839896 /* Pin.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Pin.swift; sourceTree = "<group>"; };
+		F4B117821C7BD4DA00839896 /* Photo+CoreDataProperties.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "Photo+CoreDataProperties.swift"; sourceTree = "<group>"; };
+		F4B117831C7BD4DA00839896 /* Photo.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Photo.swift; sourceTree = "<group>"; };
+		F4B117891C7C07F400839896 /* PinAnnotation.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PinAnnotation.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -41,6 +55,9 @@
 		F4B117591C7AAE6400839896 = {
 			isa = PBXGroup;
 			children = (
+				F4B117881C7C07D100839896 /* Views */,
+				F4B1177C1C7BAC2C00839896 /* Model */,
+				F4B117791C7BA91700839896 /* API */,
 				F4B117771C7AAE7800839896 /* MapKit.framework */,
 				F4B117641C7AAE6400839896 /* VirtualTourist */,
 				F4B117631C7AAE6400839896 /* Products */,
@@ -66,6 +83,34 @@
 				F4B117711C7AAE6400839896 /* Info.plist */,
 			);
 			path = VirtualTourist;
+			sourceTree = "<group>";
+		};
+		F4B117791C7BA91700839896 /* API */ = {
+			isa = PBXGroup;
+			children = (
+				F4B1177A1C7BA93C00839896 /* CoreDataStack.swift */,
+			);
+			name = API;
+			sourceTree = "<group>";
+		};
+		F4B1177C1C7BAC2C00839896 /* Model */ = {
+			isa = PBXGroup;
+			children = (
+				F4B117801C7BD4DA00839896 /* Pin+CoreDataProperties.swift */,
+				F4B117811C7BD4DA00839896 /* Pin.swift */,
+				F4B117821C7BD4DA00839896 /* Photo+CoreDataProperties.swift */,
+				F4B117831C7BD4DA00839896 /* Photo.swift */,
+				F4B1177D1C7BAC4100839896 /* pinPhotos.xcdatamodeld */,
+			);
+			name = Model;
+			sourceTree = "<group>";
+		};
+		F4B117881C7C07D100839896 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				F4B117891C7C07F400839896 /* PinAnnotation.swift */,
+			);
+			name = Views;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -144,7 +189,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F4B117871C7BD4DA00839896 /* Photo.swift in Sources */,
+				F4B117861C7BD4DA00839896 /* Photo+CoreDataProperties.swift in Sources */,
+				F4B1177B1C7BA93C00839896 /* CoreDataStack.swift in Sources */,
 				F4B117681C7AAE6400839896 /* MapViewController.swift in Sources */,
+				F4B1177F1C7BAC4100839896 /* pinPhotos.xcdatamodeld in Sources */,
+				F4B117851C7BD4DA00839896 /* Pin.swift in Sources */,
+				F4B117841C7BD4DA00839896 /* Pin+CoreDataProperties.swift in Sources */,
+				F4B1178A1C7C07F500839896 /* PinAnnotation.swift in Sources */,
 				F4B117661C7AAE6400839896 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -297,6 +349,19 @@
 			defaultConfigurationIsVisible = 0;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCVersionGroup section */
+		F4B1177D1C7BAC4100839896 /* pinPhotos.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				F4B1177E1C7BAC4100839896 /* pinPhotos.xcdatamodel */,
+			);
+			currentVersion = F4B1177E1C7BAC4100839896 /* pinPhotos.xcdatamodel */;
+			path = pinPhotos.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = F4B1175A1C7AAE6400839896 /* Project object */;
 }

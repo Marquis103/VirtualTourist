@@ -8,6 +8,7 @@
 
 import UIKit
 import MapKit
+import CoreData
 
 class MapViewController: UIViewController {
 
@@ -18,6 +19,7 @@ class MapViewController: UIViewController {
 	var deleteButton:UIButton!
 	var isMapEditing = false
 	var buttonHeight:CGFloat = 0.0
+	var coreDataStack:CoreDataStack!
 	
 	var mapSettingsPath: String {
 		let manager = NSFileManager.defaultManager()
@@ -25,6 +27,16 @@ class MapViewController: UIViewController {
 		
 		return url.URLByAppendingPathComponent("mapset").path!
 	}
+	
+	/*lazy var fetchedResultsController:NSFetchedResultsController = {
+		//create the fetch request
+		let fetchRequest = NSFetchRequest(entityName: "Pin")
+		
+		//create the fetched results controller
+		let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: CoreDataStack.sharedInstance.managedObjectContext, sectionNameKeyPath: nil, cacheName: nil)
+		
+		return fetchedResultsController
+	}()*/
 	
 	@IBAction func editPins(sender: UIBarButtonItem) {
 		isMapEditing = !isMapEditing
@@ -52,20 +64,30 @@ class MapViewController: UIViewController {
 		
 		//add long press gesture for pins
 		let longPressGesture = UILongPressGestureRecognizer(target: self, action: "addPinToMap:")
-		longPressGesture.minimumPressDuration = 2
+		longPressGesture.minimumPressDuration = 1
 		mapView.addGestureRecognizer(longPressGesture)
 	}
 	
 	override func viewWillAppear(animated: Bool) {
 		super.viewWillAppear(animated)
 		
+		//reposition map region and span
 		if let settingsDict = NSKeyedUnarchiver.unarchiveObjectWithFile(mapSettingsPath) as? [String:AnyObject] {
-			let mapCenter = CLLocationCoordinate2D(latitude: settingsDict["latitude"] as! CLLocationDegrees, longitude: settingsDict["longitude"] as! CLLocationDegrees)
+			let latitude = settingsDict["latitude"] as! CLLocationDegrees
+			let longitude = settingsDict["longitude"] as! CLLocationDegrees
+			let mapCenter = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+			
+			mapView.centerCoordinate = mapCenter
+			
 			let latDelta = (settingsDict["latitudeDelta"] as! CLLocationDegrees) ?? mapView.region.span.latitudeDelta
 			let longDelta = (settingsDict["longitudeDelta"] as! CLLocationDegrees) ?? mapView.region.span.longitudeDelta
 			let mapSpan = MKCoordinateSpan(latitudeDelta: latDelta, longitudeDelta: longDelta)
-			mapView.region = MKCoordinateRegion(center: mapCenter, span: mapSpan)
+			
+			mapView.region.span = mapSpan
 		}
+		
+		//drop all pins from the managed object context
+		reloadPins()
 	}
 
 	override func didReceiveMemoryWarning() {
@@ -74,6 +96,35 @@ class MapViewController: UIViewController {
 	}
 	
 	//MARK: Functions
+	
+	//get data out of the managed object context
+	func alertUI(withTitle title:String, message:String) {
+		let alert = UIAlertController(title: title, message: message, preferredStyle: .Alert)
+		let action = UIAlertAction(title: "OK", style: .Default, handler: nil)
+		alert.addAction(action)
+		presentViewController(alert, animated: true, completion: nil)
+	}
+	
+	func reloadPins() {
+		let fetchRequest = NSFetchRequest(entityName: "Pin")
+		
+		do {
+			if let results = try CoreDataStack.sharedInstance.managedObjectContext.executeFetchRequest(fetchRequest) as? [Pin] {
+				for mapPin in results {
+					let pin = PinAnnotation()
+					let latitude = mapPin.latitude as! CLLocationDegrees
+					let longitude = mapPin.longitude as! CLLocationDegrees
+					pin.coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+					
+					pin.pin = mapPin
+					mapView.addAnnotation(pin)
+				}
+			}
+		} catch {
+			alertUI(withTitle: "Query Error", message: "There was an error retrieving the pins from the database!")
+		}
+	}
+	
 	func adjustMapHeight(buttonOnScreen:Bool) {
 		buttonHeight = buttonHeightConstant * CGRectGetMaxY(view.bounds)
 		
@@ -115,10 +166,19 @@ class MapViewController: UIViewController {
 	//MARK: Map Functions
 	func addPinToMap(longPressGesture:UILongPressGestureRecognizer) {
 		if longPressGesture.state == .Began {
-			let pin = MKPointAnnotation()
+			let pin = PinAnnotation()
 			let touchCoord = longPressGesture.locationInView(mapView)
 			pin.coordinate = mapView.convertPoint(touchCoord, toCoordinateFromView: mapView)
+			
+			let pinEntity = Pin(context: coreDataStack.managedObjectContext)
+			pinEntity.latitude = Float(pin.coordinate.latitude)
+			pinEntity.longitude = Float(pin.coordinate.longitude)
+			pin.pin = pinEntity
 			mapView.addAnnotation(pin)
+			
+			//save the pin
+			coreDataStack.saveMainContext()
+			
 		}
 	}
 }
@@ -137,12 +197,30 @@ extension MapViewController : MKMapViewDelegate {
 	func mapView(mapView: MKMapView, viewForAnnotation annotation: MKAnnotation) -> MKAnnotationView? {
 		let pinView = MKPinAnnotationView(annotation: annotation, reuseIdentifier: nil)
 		pinView.animatesDrop = true
-		
 		return pinView
 	}
 	
 	func mapView(mapView: MKMapView, didSelectAnnotationView view: MKAnnotationView) {
-		print("we tapped it")
+		if isMapEditing {
+			//delete annotation
+			if let annotation = view.annotation as? PinAnnotation {
+				if let pin = annotation.pin {
+					coreDataStack.managedObjectContext.deleteObject(pin)
+					mapView.removeAnnotation(annotation)
+				}
+				
+				//save the context
+				coreDataStack.saveMainContext()
+			}
+		} else {
+			//get images for pin location
+			if let annotation = view.annotation {
+				print("\(annotation.coordinate)")
+			}
+		}
 	}
 }
 
+extension MapViewController : NSFetchedResultsControllerDelegate {
+	
+}
