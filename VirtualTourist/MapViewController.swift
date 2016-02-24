@@ -96,6 +96,12 @@ class MapViewController: UIViewController {
 	}
 	
 	//MARK: Functions
+	override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+		if segue.identifier == "getPhotosSegue" {
+			let destination = segue.destinationViewController as! PhotoViewController
+			destination.pin = sender as? Pin
+		}
+	}
 	
 	//get data out of the managed object context
 	func alertUI(withTitle title:String, message:String) {
@@ -214,8 +220,10 @@ extension MapViewController : MKMapViewDelegate {
 			}
 		} else {
 			//get images for pin location
-			if let annotation = view.annotation {
-				print("\(annotation.coordinate)")
+			if let annotation = view.annotation as? PinAnnotation {
+				if let pin = annotation.pin {
+					performSegueWithIdentifier("getPhotosSegue", sender: pin)
+				}
 			}
 		}
 	}
