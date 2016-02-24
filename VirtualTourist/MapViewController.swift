@@ -100,6 +100,7 @@ class MapViewController: UIViewController {
 		if segue.identifier == "getPhotosSegue" {
 			let destination = segue.destinationViewController as! PhotoViewController
 			destination.pin = sender as? Pin
+			destination.coreDataStack = coreDataStack
 		}
 	}
 	

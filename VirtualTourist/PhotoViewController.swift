@@ -14,15 +14,17 @@ class PhotoViewController: UIViewController {
 	private let mapHeight:CGFloat = 0.35
 	var coreDataStack:CoreDataStack!
 	var pin:Pin?
+	var photoURLs:[String:NSDate]?
 	
 	@IBOutlet weak var mapView: MKMapView!
 	
     override func viewDidLoad() {
         super.viewDidLoad()
 
-		//set mapheight to 12% of view
+		//set mapheight to % of view height
 		//mapView.frame.size.height = mapHeight * view.bounds.height
 		mapView.userInteractionEnabled = false
+		
 		//set region
 		if let pin = self.pin {
 			let latitude = pin.latitude as! CLLocationDegrees
@@ -36,12 +38,32 @@ class PhotoViewController: UIViewController {
 			marker.coordinate = center
 			mapView.addAnnotation(marker)
 		}
+		
+		//get results from the fetchedResultsController
+		do {
+			try fetchedResultsController.performFetch()
+		} catch {
+			let fetchError = error as NSError
+			print("\(fetchError), \(fetchError.userInfo)")
+			alertUI(withTitle: "Failed Query", message: "Failed to load photos")
+		}
     }
 	
 	override func viewWillAppear(animated: Bool) {
 		super.viewWillAppear(animated)
 		
-		getPhotos(fromCache: false)
+		var objectCount = 0
+		
+		if let sections = fetchedResultsController.sections {
+			objectCount = sections.count
+		}
+		
+		
+		//if there are objects in the fetched results controller display those images
+		if objectCount == 0 {
+			
+			getPhotos()
+		}
 	}
 
     override func didReceiveMemoryWarning() {
@@ -52,6 +74,27 @@ class PhotoViewController: UIViewController {
 	override func willAnimateRotationToInterfaceOrientation(toInterfaceOrientation: UIInterfaceOrientation, duration: NSTimeInterval) {
 		mapView.frame.size.height = mapHeight * view.bounds.height
 	}
+	
+	//MARK: NSFetchedResultsController
+	lazy var fetchedResultsController : NSFetchedResultsController = {
+		//create the fetch request
+		let fetchRequest = NSFetchRequest(entityName: "Photo")
+		
+		//add a sort descriptor, enforces a sort order on the results
+		fetchRequest.sortDescriptors = [NSSortDescriptor(key: "dateTaken", ascending: false)]
+		
+		//add a predicate to only get photos for the specified pin
+		if let latitude = self.pin?.latitude, let longitude = self.pin?.longitude {
+			let predicate = NSPredicate(format: "(pin.latitude == %@) AND (pin.longitude == %@)", latitude, longitude)
+			fetchRequest.predicate = predicate
+		}
+		
+		//create fetched results controller
+		let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.coreDataStack.managedObjectContext, sectionNameKeyPath: nil, cacheName: nil)
+		
+		return fetchedResultsController
+		
+	}()
 	
 	//MARK: Functions
 	//get data out of the managed object context
@@ -75,11 +118,66 @@ class PhotoViewController: UIViewController {
 				if let photos = result {
 					if let photosDict = photos["photos"] as? [String:AnyObject] {
 						if let photosDesc = photosDict["photo"] as? [[String:AnyObject]] {
+							self.photoURLs = [String:NSDate]()
+							let dateFormatter = NSDateFormatter()
+							dateFormatter.dateFormat = "yyyy-MM-dd hh:mm:ss"
 							for (_, photoItem) in photosDesc.enumerate() {
-								if let photoURL = photoItem["url_m"] as? String {
-									print(photoURL)
+								if let photoURL = photoItem["url_m"] as? String, let dateTaken = photoItem["datetaken"] as? String {
+									//photo urls of images to be downloaded
+									self.photoURLs![photoURL] = dateFormatter.dateFromString(dateTaken)
 								}
 							}
+							
+							//push downloading of images to global background queue (GCDBlackBox.swift)
+							performDownloadsAndUpdateInBackground({ () -> Void in
+								if self.photoURLs?.keys.count > FlickrClient.Constants.UIConstants.MaxPhotoCount {
+									//get random indexes
+									var photoIndexes = Set<Int>()
+									
+									let count = self.photoURLs?.keys.count
+									
+									//get random indexes
+									repeat {
+										photoIndexes.insert(Int(arc4random_uniform(UInt32(count! + 1))))
+										
+									} while photoIndexes.count < FlickrClient.Constants.UIConstants.MaxPhotoCount
+									
+									
+									let urls = Array(self.photoURLs!.keys)
+									
+									for index in photoIndexes {
+										if let url = NSURL(string: urls[index]) {
+											if let imageData = NSData(contentsOfURL: url) {
+												let image = UIImage(data: imageData)
+												performUIUpdatesOnMain({ () -> Void in
+													let photo = Photo(context: self.coreDataStack.managedObjectContext)
+													photo.image = image!
+													photo.dateTaken = self.photoURLs![urls[index]]!
+													photo.pin = self.pin!
+												})
+											}
+										}
+									}
+								} else {
+									//just get the images from the url
+									for urlString in self.photoURLs!.keys {
+										if let url = NSURL(string: urlString) {
+											if let imageData = NSData(contentsOfURL: url) {
+												let image = UIImage(data: imageData)
+												performUIUpdatesOnMain({ () -> Void in
+													let photo = Photo(context: self.coreDataStack.managedObjectContext)
+													photo.image = image!
+													photo.dateTaken = self.photoURLs![urlString]!
+													photo.pin = self.pin!
+												})
+											}
+										}
+									}
+								}
+							})
+							
+							//save context
+							self.coreDataStack.saveMainContext()
 						}
 					}
 				}

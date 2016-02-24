@@ -14,6 +14,7 @@ class Photo: NSManagedObject {
 
 	struct Keys {
 		static let image = "image"
+		static let dateTaken = "dateTaken"
 	}
 	
 	override init(entity: NSEntityDescription, insertIntoManagedObjectContext context: NSManagedObjectContext?) {
@@ -28,15 +29,15 @@ class Photo: NSManagedObject {
 		super.init(entity: photoEntity, insertIntoManagedObjectContext: context)
 	}
 	
-	init(dictionary: [String:UIImage], context: NSManagedObjectContext) {
+	init(dictionary: [String:AnyObject], context: NSManagedObjectContext) {
 		guard let photoEntity = NSEntityDescription.entityForName("Photo", inManagedObjectContext: context) else {
 			fatalError("Could not create Photo Entity Description!")
 		}
 		
 		super.init(entity: photoEntity, insertIntoManagedObjectContext: context)
 		
-		image = dictionary[Keys.image]!
-		
+		image = dictionary[Keys.image] as! UIImage
+		dateTaken = dictionary[Keys.dateTaken] as! NSDate
 	}
 
 }

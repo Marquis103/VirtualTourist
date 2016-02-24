@@ -19,7 +19,7 @@ class FlickrClient {
 			static let ApiMethod = "flickr.photos.search"
 			static let APIKey = "255a31ccd4a30c7e4f575f56aaaced03"
 			static let SafeSearch = 1
-			static let extras = "url_m"
+			static let extras = "url_m,date_taken"
 			static let format = "json"
 			static let nojsoncallback = 1
 			static let SearchBBOXHalfWidth:Float = 1.0
@@ -27,9 +27,14 @@ class FlickrClient {
 			static let SearchLatRange:(Float, Float) = (-90.0, 90.0)
 			static let SearchLonRange:(Float, Float) = (-180.0, 180.0)
 		}
+		
+		struct UIConstants {
+			static let MaxPhotoCount = 21
+		}
+		
 	}
 	
-	func checkForErrors(data:NSData?, response:NSURLResponse?, error:NSError?) -> NSError? {
+	private func checkForErrors(data:NSData?, response:NSURLResponse?, error:NSError?) -> NSError? {
 		func sendError(error:String) -> NSError {
 			print(error)
 			let userInfo = [NSLocalizedDescriptionKey : error]

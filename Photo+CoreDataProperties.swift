@@ -2,7 +2,7 @@
 //  Photo+CoreDataProperties.swift
 //  VirtualTourist
 //
-//  Created by Marquis Dennis on 2/22/16.
+//  Created by Marquis Dennis on 2/24/16.
 //  Copyright © 2016 Marquis Dennis. All rights reserved.
 //
 //  Choose "Create NSManagedObject Subclass…" from the Core Data editor menu
@@ -14,7 +14,8 @@ import CoreData
 
 extension Photo {
 
+    @NSManaged var dateTaken: NSDate
     @NSManaged var image: UIImage
-    @NSManaged var pins: Pin
+    @NSManaged var pin: Pin?
 
 }
