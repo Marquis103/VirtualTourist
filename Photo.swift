@@ -15,6 +15,7 @@ class Photo: NSManagedObject {
 	struct Keys {
 		static let image = "image"
 		static let dateTaken = "dateTaken"
+		static let imageURL = "imageUrl"
 	}
 	
 	override init(entity: NSEntityDescription, insertIntoManagedObjectContext context: NSManagedObjectContext?) {
@@ -36,8 +37,9 @@ class Photo: NSManagedObject {
 		
 		super.init(entity: photoEntity, insertIntoManagedObjectContext: context)
 		
-		image = dictionary[Keys.image] as! UIImage
+		image = dictionary[Keys.image] as? UIImage
 		dateTaken = dictionary[Keys.dateTaken] as! NSDate
+		imageUrl = dictionary[Keys.imageURL] as! String
 	}
 
 }

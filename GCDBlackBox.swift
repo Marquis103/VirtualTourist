@@ -15,7 +15,7 @@ func performUIUpdatesOnMain(updates:() -> Void ) {
 }
 
 func performDownloadsAndUpdateInBackground(updates:() -> Void) {
-	dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0)) { () -> Void in
+	dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INTERACTIVE, 0)) { () -> Void in
 		updates()
 	}
 }

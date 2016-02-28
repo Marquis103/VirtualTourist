@@ -28,16 +28,6 @@ class MapViewController: UIViewController {
 		return url.URLByAppendingPathComponent("mapset").path!
 	}
 	
-	/*lazy var fetchedResultsController:NSFetchedResultsController = {
-		//create the fetch request
-		let fetchRequest = NSFetchRequest(entityName: "Pin")
-		
-		//create the fetched results controller
-		let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: CoreDataStack.sharedInstance.managedObjectContext, sectionNameKeyPath: nil, cacheName: nil)
-		
-		return fetchedResultsController
-	}()*/
-	
 	@IBAction func editPins(sender: UIBarButtonItem) {
 		isMapEditing = !isMapEditing
 		
@@ -66,6 +56,9 @@ class MapViewController: UIViewController {
 		let longPressGesture = UILongPressGestureRecognizer(target: self, action: "addPinToMap:")
 		longPressGesture.minimumPressDuration = 1
 		mapView.addGestureRecognizer(longPressGesture)
+		
+		//drop all pins from the managed object context
+		reloadPins()
 	}
 	
 	override func viewWillAppear(animated: Bool) {
@@ -85,9 +78,6 @@ class MapViewController: UIViewController {
 			
 			mapView.region.span = mapSpan
 		}
-		
-		//drop all pins from the managed object context
-		reloadPins()
 	}
 
 	override func didReceiveMemoryWarning() {

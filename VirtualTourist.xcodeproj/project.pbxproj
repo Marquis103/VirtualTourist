@@ -23,6 +23,7 @@
 		F4B1178C1C7C118800839896 /* PhotoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B1178B1C7C118800839896 /* PhotoViewController.swift */; };
 		F4B1178E1C7C240400839896 /* FlickrClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B1178D1C7C240400839896 /* FlickrClient.swift */; };
 		F4B117901C7D440D00839896 /* GCDBlackBox.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B1178F1C7D440D00839896 /* GCDBlackBox.swift */; };
+		F4B117941C7E86FE00839896 /* PhotoViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4B117931C7E86FE00839896 /* PhotoViewCell.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -45,6 +46,8 @@
 		F4B1178D1C7C240400839896 /* FlickrClient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = FlickrClient.swift; sourceTree = "<group>"; };
 		F4B1178F1C7D440D00839896 /* GCDBlackBox.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = GCDBlackBox.swift; sourceTree = "<group>"; };
 		F4B117911C7D730C00839896 /* pinPhotos_2.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = pinPhotos_2.xcdatamodel; sourceTree = "<group>"; };
+		F4B117921C7E4DBF00839896 /* pinPhotos_ 3.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = "pinPhotos_ 3.xcdatamodel"; sourceTree = "<group>"; };
+		F4B117931C7E86FE00839896 /* PhotoViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoViewCell.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -119,6 +122,7 @@
 			isa = PBXGroup;
 			children = (
 				F4B117891C7C07F400839896 /* PinAnnotation.swift */,
+				F4B117931C7E86FE00839896 /* PhotoViewCell.swift */,
 			);
 			name = Views;
 			sourceTree = "<group>";
@@ -201,6 +205,7 @@
 			files = (
 				F4B117871C7BD4DA00839896 /* Photo.swift in Sources */,
 				F4B117861C7BD4DA00839896 /* Photo+CoreDataProperties.swift in Sources */,
+				F4B117941C7E86FE00839896 /* PhotoViewCell.swift in Sources */,
 				F4B1177B1C7BA93C00839896 /* CoreDataStack.swift in Sources */,
 				F4B117681C7AAE6400839896 /* MapViewController.swift in Sources */,
 				F4B117901C7D440D00839896 /* GCDBlackBox.swift in Sources */,
@@ -368,10 +373,11 @@
 		F4B1177D1C7BAC4100839896 /* pinPhotos.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
+				F4B117921C7E4DBF00839896 /* pinPhotos_ 3.xcdatamodel */,
 				F4B117911C7D730C00839896 /* pinPhotos_2.xcdatamodel */,
 				F4B1177E1C7BAC4100839896 /* pinPhotos.xcdatamodel */,
 			);
-			currentVersion = F4B117911C7D730C00839896 /* pinPhotos_2.xcdatamodel */;
+			currentVersion = F4B117921C7E4DBF00839896 /* pinPhotos_ 3.xcdatamodel */;
 			path = pinPhotos.xcdatamodeld;
 			sourceTree = "<group>";
 			versionGroupType = wrapper.xcdatamodel;

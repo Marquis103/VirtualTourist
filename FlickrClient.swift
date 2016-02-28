@@ -22,14 +22,16 @@ class FlickrClient {
 			static let extras = "url_m,date_taken"
 			static let format = "json"
 			static let nojsoncallback = 1
-			static let SearchBBOXHalfWidth:Float = 1.0
-			static let SearchBBOXHalfHeight:Float = 1.0
+			static let SearchBBOXHalfWidth:Float = 0.01
+			static let SearchBBOXHalfHeight:Float = 0.01
 			static let SearchLatRange:(Float, Float) = (-90.0, 90.0)
 			static let SearchLonRange:(Float, Float) = (-180.0, 180.0)
 		}
 		
 		struct UIConstants {
 			static let MaxPhotoCount = 21
+			static let MaxPageCount = 4
+			static let MaxItemsPerPage = 16
 		}
 		
 	}
@@ -144,6 +146,7 @@ class FlickrClient {
 	
 	func getPhotosByLocation(using pin:Pin, completionHandler handler: (result: AnyObject?, error: NSError?) -> Void) {
 		var parameters = [String:AnyObject]()
+		
 		//setup parameters for query
 		parameters["bbox"] = createBBox(pin.latitude as! Float, longitude: pin.longitude as! Float)
 		parameters["safe_search"] = Constants.FlickrClient.SafeSearch
@@ -160,9 +163,9 @@ class FlickrClient {
 			}
 			
 			if let pageCount = page {
-				let pageLimit = min(pageCount, 16) //250 items per page
+				let pageLimit = min(pageCount, Constants.UIConstants.MaxItemsPerPage) //250 items per page
 				let randomPage = Int(arc4random_uniform(UInt32(pageLimit))) + 1
-				parameters["page"] = randomPage
+				parameters["page"] = min(randomPage, Constants.UIConstants.MaxPageCount)
 				
 				guard let request = self.getURLFromParameters(parameters, query: nil, replaceQueryString: false) else {
 					let userInfo = [NSLocalizedDescriptionKey : "Could not generate request"]
