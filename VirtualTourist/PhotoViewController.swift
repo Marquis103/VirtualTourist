@@ -145,22 +145,25 @@ class PhotoViewController: UIViewController {
 		} else {
 			newCollection.enabled = false
 			
-			if let pin = self.pin, let _ = pin.photos {
-				isFetchingData = true
-				for photo in fetchedResultsController.fetchedObjects as! [Photo] {
-					photo.pin = nil
+			photoCollectionView.performBatchUpdates({ () -> Void in
+				if let pin = self.pin, let _ = pin.photos {
+					self.isFetchingData = true
+					for photo in self.fetchedResultsController.fetchedObjects as! [Photo] {
+						self.sharedContext.deleteObject(photo)
+					}
+					
 					CoreDataStack.sharedInstance.saveMainContext()
+					//isFetchingData = false
 				}
-				isFetchingData = false
-			}
-			
-			getPhotos()
+				}, completion: { (completed) -> Void in
+					self.getPhotos()
+			})
 		}
 	}
 	
 	func removePhotosFromPin(indexPath:NSIndexPath) {
 		let photo = self.fetchedResultsController.objectAtIndexPath(indexPath) as! Photo
-		photo.pin = nil
+		sharedContext.deleteObject(photo)
 		CoreDataStack.sharedInstance.saveMainContext()
 		
 		if let indexToRemove = self.selectedPhotos?.indexOf(indexPath) {
@@ -175,6 +178,7 @@ class PhotoViewController: UIViewController {
 		presentViewController(alert, animated: true, completion: nil)
 	}
 	
+	//MARK: - Get Photos from Flickr
 	func getPhotos(fromCache cache:Bool = false) {
 		if cache {
 			
@@ -296,19 +300,10 @@ extension PhotoViewController : UICollectionViewDataSource {
 		
 		let photo = fetchedResultsController.objectAtIndexPath(indexPath) as! Photo
 		
-		//if the file doesn't exist then load it
+		//if the file does exist then load it
 		if NSFileManager.defaultManager().fileExistsAtPath(photo.imageLocation!) {
-			let fileURL = NSURL(fileURLWithPath: photo.imageLocation!)
-			performDownloadsAndUpdateInBackground({ () -> Void in
-				let imageData = NSData(contentsOfURL: fileURL)
-				
-				if let imageData = imageData {
-					performUIUpdatesOnMain({ () -> Void in
-						cell.photoCellImageView.image = UIImage(data: imageData)
-						cell.loadingView.hidden = true
-					})
-				}
-			})
+			cell.photoCellImageView.image = UIImage(contentsOfFile: photo.imageLocation!)
+			cell.loadingView.hidden = true
 		} else {
 			//if the file does not exist download it from the Internet and save it
 			if let imageURL = NSURL(string: photo.imageUrl) {
@@ -332,37 +327,14 @@ extension PhotoViewController : UICollectionViewDataSource {
 }
 
 extension PhotoViewController : NSFetchedResultsControllerDelegate {
-	func controllerDidChangeContent(controller: NSFetchedResultsController) {
-		photoCollectionView.reloadData()
-	}
-	
 	func controller(controller: NSFetchedResultsController, didChangeObject anObject: AnyObject, atIndexPath indexPath: NSIndexPath?, forChangeType type: NSFetchedResultsChangeType, newIndexPath: NSIndexPath?) {
 		switch type {
 		case .Delete:
-			//delete file from file system after removed from managed objecdt context
-			if let photoObject = anObject as? Photo {
-				if let imageLocation = photoObject.imageLocation {
-					if NSFileManager.defaultManager().fileExistsAtPath(imageLocation) {
-						do {
-							try NSFileManager.defaultManager().removeItemAtPath(imageLocation)
-						} catch {
-							let deleteError = error as NSError
-							print(deleteError)
-						}
-					}
-				}
-			}
-			
-			if isFetchingData {
-				photoCollectionView.reloadData()
-			} else {
-				photoCollectionView.deleteItemsAtIndexPaths(Array(arrayLiteral: indexPath!))
-			}
-			
+			photoCollectionView.deleteItemsAtIndexPaths(Array(arrayLiteral: indexPath!))
 			break
 			
 		case .Insert:
-			photoCollectionView.reloadData()
+			photoCollectionView.insertItemsAtIndexPaths(Array(arrayLiteral: newIndexPath!))
 			break
 			
 		default:

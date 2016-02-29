@@ -171,6 +171,10 @@ class MapViewController: UIViewController {
 	
 	//MARK: Map Functions
 	func addPinToMap(longPressGesture:UILongPressGestureRecognizer) {
+		if isMapEditing {
+			return
+		}
+		
 		switch longPressGesture.state {
 		case .Began:
 			currentPin = PinAnnotation()
@@ -231,28 +235,12 @@ extension MapViewController : MKMapViewDelegate {
 			//delete annotation
 			if let annotation = view.annotation as? PinAnnotation {
 				if let pin = annotation.pin {
-					let photoSet = pin.photos ?? []
+					//let photoSet = pin.photos ?? []
 					
 					sharedContext.deleteObject(pin)
 					mapView.removeAnnotation(annotation)
 					
-					//delete photos from
-					handleBackgroundFileOperations({ () -> Void in
-						for photoObject in photoSet {
-							if let photo = photoObject as? Photo {
-								if let imageLocation = photo.imageLocation {
-									if NSFileManager.defaultManager().fileExistsAtPath(imageLocation) {
-										do {
-											try NSFileManager.defaultManager().removeItemAtPath(imageLocation)
-										} catch {
-											let deleteError = error as NSError
-											print(deleteError)
-										}
-									}
-								}
-							}
-						}
-					})
+					
 				}
 				
 				//save the context

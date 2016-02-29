@@ -13,7 +13,7 @@ import CoreData
 class Photo: NSManagedObject {
 
 	struct Keys {
-		static let image = "imageLocation"
+		static let imageLocation = "imageLocation"
 		static let dateTaken = "dateTaken"
 		static let imageURL = "imageUrl"
 	}
@@ -37,9 +37,24 @@ class Photo: NSManagedObject {
 		
 		super.init(entity: photoEntity, insertIntoManagedObjectContext: context)
 		
-		imageLocation = dictionary[Keys.image] as? String
+		imageLocation = dictionary[Keys.imageLocation] as? String
 		dateTaken = dictionary[Keys.dateTaken] as! NSDate
 		imageUrl = dictionary[Keys.imageURL] as! String
 	}
 
+	override func prepareForDeletion() {
+		//delete photos from disk
+		handleBackgroundFileOperations({ () -> Void in
+			if let imageLocation = self.imageLocation {
+				if NSFileManager.defaultManager().fileExistsAtPath(imageLocation) {
+					do {
+						try NSFileManager.defaultManager().removeItemAtPath(imageLocation)
+					} catch {
+						let deleteError = error as NSError
+						print(deleteError)
+					}
+				}
+			}
+		})
+	}
 }

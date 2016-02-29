@@ -28,6 +28,7 @@
 
 /* Begin PBXFileReference section */
 		F48B73B31C83CB5B00C726B3 /* pinPhotos_4.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = pinPhotos_4.xcdatamodel; sourceTree = "<group>"; };
+		F48B73B41C8416E400C726B3 /* pinPhotos_5.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = pinPhotos_5.xcdatamodel; sourceTree = "<group>"; };
 		F4B117621C7AAE6400839896 /* VirtualTourist.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = VirtualTourist.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4B117651C7AAE6400839896 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		F4B117671C7AAE6400839896 /* MapViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MapViewController.swift; sourceTree = "<group>"; };
@@ -374,6 +375,7 @@
 		F4B1177D1C7BAC4100839896 /* pinPhotos.xcdatamodeld */ = {
 			isa = XCVersionGroup;
 			children = (
+				F48B73B41C8416E400C726B3 /* pinPhotos_5.xcdatamodel */,
 				F48B73B31C83CB5B00C726B3 /* pinPhotos_4.xcdatamodel */,
 				F4B117921C7E4DBF00839896 /* pinPhotos_ 3.xcdatamodel */,
 				F4B117911C7D730C00839896 /* pinPhotos_2.xcdatamodel */,

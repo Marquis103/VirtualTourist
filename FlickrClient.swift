@@ -30,7 +30,7 @@ class FlickrClient {
 		
 		struct UIConstants {
 			static let MaxPhotoCount = 21
-			static let MaxPageCount = 4
+			static let MaxPageCount = 15
 			static let MaxItemsPerPage = 16
 		}
 		
@@ -99,17 +99,6 @@ class FlickrClient {
 	}
 	
 	private func getPhotoPageNumber(withParameters parameters:[String:AnyObject], pin:Pin, completionHandler handler: (page:Int?, error:NSError?)-> Void) {
-//		var parameters = [String:AnyObject]()
-//		
-//		
-//		//setup parameters for query
-//		parameters["bbox"] = createBBox(pin.latitude as! Float, longitude: pin.longitude as! Float)
-//		parameters["safe_search"] = Constants.FlickrClient.SafeSearch
-//		parameters["extras"] = Constants.FlickrClient.extras
-//		parameters["api_key"] = Constants.FlickrClient.APIKey
-//		parameters["method"] = Constants.FlickrClient.ApiMethod
-//		parameters["format"] = Constants.FlickrClient.format
-//		parameters["nojsoncallback"] = Constants.FlickrClient.nojsoncallback
 		
 		guard let request = getURLFromParameters(parameters, query: nil, replaceQueryString: false) else {
 			let userInfo = [NSLocalizedDescriptionKey : "Could not generate request"]
