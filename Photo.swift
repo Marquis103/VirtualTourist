@@ -13,7 +13,7 @@ import CoreData
 class Photo: NSManagedObject {
 
 	struct Keys {
-		static let image = "image"
+		static let image = "imageLocation"
 		static let dateTaken = "dateTaken"
 		static let imageURL = "imageUrl"
 	}
@@ -37,7 +37,7 @@ class Photo: NSManagedObject {
 		
 		super.init(entity: photoEntity, insertIntoManagedObjectContext: context)
 		
-		image = dictionary[Keys.image] as? UIImage
+		imageLocation = dictionary[Keys.image] as? String
 		dateTaken = dictionary[Keys.dateTaken] as! NSDate
 		imageUrl = dictionary[Keys.imageURL] as! String
 	}

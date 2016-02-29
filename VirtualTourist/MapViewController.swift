@@ -19,7 +19,7 @@ class MapViewController: UIViewController {
 	var deleteButton:UIButton!
 	var isMapEditing = false
 	var buttonHeight:CGFloat = 0.0
-	var coreDataStack:CoreDataStack!
+	var currentPin:PinAnnotation?
 	
 	var mapSettingsPath: String {
 		let manager = NSFileManager.defaultManager()
@@ -89,8 +89,12 @@ class MapViewController: UIViewController {
 	override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
 		if segue.identifier == "getPhotosSegue" {
 			let destination = segue.destinationViewController as! PhotoViewController
-			destination.pin = sender as? Pin
-			destination.coreDataStack = coreDataStack
+			let annotation = sender as! PinAnnotation
+			
+			if let pin = annotation.pin {
+				destination.pin = pin
+				mapView.deselectAnnotation(annotation, animated: true)
+			}
 		}
 	}
 	
@@ -160,22 +164,47 @@ class MapViewController: UIViewController {
 		view.addSubview(deleteButton)
 	}
 	
+	//MARK: - Shared Context
+	lazy var sharedContext: NSManagedObjectContext = {
+		CoreDataStack.sharedInstance.managedObjectContext
+	}()
+	
 	//MARK: Map Functions
 	func addPinToMap(longPressGesture:UILongPressGestureRecognizer) {
-		if longPressGesture.state == .Began {
-			let pin = PinAnnotation()
+		switch longPressGesture.state {
+		case .Began:
+			currentPin = PinAnnotation()
 			let touchCoord = longPressGesture.locationInView(mapView)
-			pin.coordinate = mapView.convertPoint(touchCoord, toCoordinateFromView: mapView)
+			currentPin!.coordinate = mapView.convertPoint(touchCoord, toCoordinateFromView: mapView)
+			mapView.addAnnotation(currentPin!)
 			
-			let pinEntity = Pin(context: coreDataStack.managedObjectContext)
-			pinEntity.latitude = Float(pin.coordinate.latitude)
-			pinEntity.longitude = Float(pin.coordinate.longitude)
-			pin.pin = pinEntity
-			mapView.addAnnotation(pin)
+			break
 			
-			//save the pin
-			coreDataStack.saveMainContext()
+		case .Changed:
+			if let pin = currentPin {
+				let touchCoord = longPressGesture.locationInView(mapView)
+				pin.coordinate = mapView.convertPoint(touchCoord, toCoordinateFromView: mapView)
+			}
+
+			break
 			
+		case .Ended:
+			if let pin = currentPin {
+				let pinEntity = Pin(context: sharedContext)
+				pinEntity.latitude = Float(pin.coordinate.latitude)
+				pinEntity.longitude = Float(pin.coordinate.longitude)
+				pin.pin = pinEntity
+				
+				//save the pin
+				CoreDataStack.sharedInstance.saveMainContext()
+				
+				//after the pin has been saved -- there is no longer a current pin
+				currentPin = nil
+			}
+			break
+			
+		default:
+			break
 		}
 	}
 }
@@ -202,18 +231,38 @@ extension MapViewController : MKMapViewDelegate {
 			//delete annotation
 			if let annotation = view.annotation as? PinAnnotation {
 				if let pin = annotation.pin {
-					coreDataStack.managedObjectContext.deleteObject(pin)
+					let photoSet = pin.photos ?? []
+					
+					sharedContext.deleteObject(pin)
 					mapView.removeAnnotation(annotation)
+					
+					//delete photos from
+					handleBackgroundFileOperations({ () -> Void in
+						for photoObject in photoSet {
+							if let photo = photoObject as? Photo {
+								if let imageLocation = photo.imageLocation {
+									if NSFileManager.defaultManager().fileExistsAtPath(imageLocation) {
+										do {
+											try NSFileManager.defaultManager().removeItemAtPath(imageLocation)
+										} catch {
+											let deleteError = error as NSError
+											print(deleteError)
+										}
+									}
+								}
+							}
+						}
+					})
 				}
 				
 				//save the context
-				coreDataStack.saveMainContext()
+				CoreDataStack.sharedInstance.saveMainContext()
 			}
 		} else {
 			//get images for pin location
 			if let annotation = view.annotation as? PinAnnotation {
-				if let pin = annotation.pin {
-					performSegueWithIdentifier("getPhotosSegue", sender: pin)
+				if let _ = annotation.pin {
+					performSegueWithIdentifier("getPhotosSegue", sender: annotation)
 				}
 			}
 		}

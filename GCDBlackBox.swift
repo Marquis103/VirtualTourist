@@ -19,3 +19,9 @@ func performDownloadsAndUpdateInBackground(updates:() -> Void) {
 		updates()
 	}
 }
+
+func handleBackgroundFileOperations(updates:() -> Void) {
+	dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0)) { () -> Void in
+		updates()
+	}
+}

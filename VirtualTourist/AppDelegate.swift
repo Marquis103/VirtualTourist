@@ -12,17 +12,8 @@ import UIKit
 class AppDelegate: UIResponder, UIApplicationDelegate {
 
 	var window: UIWindow?
-	lazy var coreDataStack = CoreDataStack.sharedInstance
 
 	func application(application: UIApplication, didFinishLaunchingWithOptions launchOptions: [NSObject: AnyObject]?) -> Bool {
-		//pass the coreDataStack object to the viewControllers
-		if let controller = window?.rootViewController as? UINavigationController {
-			for childViewController in controller.viewControllers ?? [] {
-				if childViewController.respondsToSelector("setCoreDataStack:") {
-					childViewController.performSelector("setCoreDataStack:", withObject: coreDataStack)
-				}
-			}
-		}
 		
 		return true
 	}

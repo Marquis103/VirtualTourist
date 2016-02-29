@@ -11,18 +11,17 @@ import MapKit
 import CoreData
 
 class PhotoViewController: UIViewController {
-	private let mapHeight:CGFloat = 0.35
-	var coreDataStack:CoreDataStack!
 	var pin:Pin?
 	var photoURLs:[String:NSDate]?
-	
 	@IBOutlet weak var newCollection: UIButton!
 	@IBOutlet weak var photoCollectionView: UICollectionView!
 	@IBOutlet weak var mapView: MKMapView!
-	
 	@IBOutlet weak var noPhotosLabel: UILabel!
 	private var selectedPhotos:[NSIndexPath]?
 	private var isFetchingData = false
+	private var photosFilePath: String {
+		return NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true).first!
+	}
 	
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -91,6 +90,12 @@ class PhotoViewController: UIViewController {
 		
 	}
 	
+	//MARK: - Shared Context
+	//MARK: - Shared Context
+	lazy var sharedContext: NSManagedObjectContext = {
+		CoreDataStack.sharedInstance.managedObjectContext
+	}()
+	
 	//MARK: NSFetchedResultsController
 	lazy var fetchedResultsController : NSFetchedResultsController = {
 		//create the fetch request
@@ -106,7 +111,7 @@ class PhotoViewController: UIViewController {
 		}
 		
 		//create fetched results controller
-		let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.coreDataStack.managedObjectContext, sectionNameKeyPath: nil, cacheName: nil)
+		let fetchedResultsController = NSFetchedResultsController(fetchRequest: fetchRequest, managedObjectContext: self.sharedContext, sectionNameKeyPath: nil, cacheName: nil)
 		
 		return fetchedResultsController
 		
@@ -144,7 +149,7 @@ class PhotoViewController: UIViewController {
 				isFetchingData = true
 				for photo in fetchedResultsController.fetchedObjects as! [Photo] {
 					photo.pin = nil
-					coreDataStack.saveMainContext()
+					CoreDataStack.sharedInstance.saveMainContext()
 				}
 				isFetchingData = false
 			}
@@ -156,7 +161,7 @@ class PhotoViewController: UIViewController {
 	func removePhotosFromPin(indexPath:NSIndexPath) {
 		let photo = self.fetchedResultsController.objectAtIndexPath(indexPath) as! Photo
 		photo.pin = nil
-		self.coreDataStack.saveMainContext()
+		CoreDataStack.sharedInstance.saveMainContext()
 		
 		if let indexToRemove = self.selectedPhotos?.indexOf(indexPath) {
 			self.selectedPhotos?.removeAtIndex(indexToRemove)
@@ -193,63 +198,31 @@ class PhotoViewController: UIViewController {
 								}
 							}
 							
-							if self.photoURLs?.keys.count > FlickrClient.Constants.UIConstants.MaxPhotoCount {
-								//get random indexes
-								var photoIndexes = Set<Int>()
-								
-								let count = self.photoURLs?.keys.count
-						
-								repeat {
-									photoIndexes.insert(Int(arc4random_uniform(UInt32(count!))))
-									
-								} while photoIndexes.count < FlickrClient.Constants.UIConstants.MaxPhotoCount
-								
-								let urls = Array(self.photoURLs!.keys)
-
-								for index in photoIndexes {
-
-									performUIUpdatesOnMain({ () -> Void in
-										let photo = Photo(context: self.coreDataStack.managedObjectContext)
-										photo.dateTaken = self.photoURLs![urls[index]]!
-										photo.imageUrl = urls[index]
+							if self.photoURLs!.keys.count > 0 {
+								//just get the images from the url
+								for urlString in self.photoURLs!.keys {
+									if let photoFileName = urlString.componentsSeparatedByString("/").last {
+										let photo = Photo(context: self.sharedContext)
+										photo.imageUrl = urlString
+										photo.dateTaken = self.photoURLs![urlString]!
 										photo.pin = self.pin!
-										self.coreDataStack.saveMainContext()
-									})
+										photo.imageLocation = NSURL(string: self.photosFilePath)!.URLByAppendingPathComponent(photoFileName).path!
+										CoreDataStack.sharedInstance.saveMainContext()
+									}
 								}
 								
 								//save context
 								performUIUpdatesOnMain({ () -> Void in
 									self.photoCollectionView.hidden = false
 									self.newCollection.enabled = true
-									self.coreDataStack.saveMainContext()
 								})
-								
 							} else {
-								if self.photoURLs!.keys.count > 0 {
-									//just get the images from the url
-									for urlString in self.photoURLs!.keys {
-										performUIUpdatesOnMain({ () -> Void in
-											let photo = Photo(context: self.coreDataStack.managedObjectContext)
-											photo.imageUrl = urlString
-											photo.dateTaken = self.photoURLs![urlString]!
-											photo.pin = self.pin!
-											self.coreDataStack.saveMainContext()
-										})
-									}
+								performUIUpdatesOnMain({ () -> Void in
+									self.photoCollectionView.hidden = true
+									self.newCollection.enabled = true
+									self.noPhotosLabel.hidden = false
 									
-									//save context
-									performUIUpdatesOnMain({ () -> Void in
-										self.photoCollectionView.hidden = false
-										self.newCollection.enabled = true
-									})
-								} else {
-									performUIUpdatesOnMain({ () -> Void in
-										self.photoCollectionView.hidden = true
-										self.newCollection.enabled = true
-										self.noPhotosLabel.hidden = false
-										
-									})
-								}
+								})
 							}
 						}
 					}
@@ -323,26 +296,34 @@ extension PhotoViewController : UICollectionViewDataSource {
 		
 		let photo = fetchedResultsController.objectAtIndexPath(indexPath) as! Photo
 		
-		if let image = photo.image {
-			cell.loadingView.hidden = true
-			
-			//put the image in the cell
-			cell.photoCellImageView.image = image
-		} else {
-			//show activity indicator view
+		//if the file doesn't exist then load it
+		if NSFileManager.defaultManager().fileExistsAtPath(photo.imageLocation!) {
+			let fileURL = NSURL(fileURLWithPath: photo.imageLocation!)
 			performDownloadsAndUpdateInBackground({ () -> Void in
-				if let url = NSURL(string: photo.imageUrl) {
-					if let imageData = NSData(contentsOfURL: url) {
-						let image = UIImage(data: imageData)
-						performUIUpdatesOnMain({ () -> Void in
-							photo.image = image
-							cell.loadingView.hidden = true
-							self.coreDataStack.saveMainContext()
-							cell.photoCellImageView.image = image
-						})
-					}
+				let imageData = NSData(contentsOfURL: fileURL)
+				
+				if let imageData = imageData {
+					performUIUpdatesOnMain({ () -> Void in
+						cell.photoCellImageView.image = UIImage(data: imageData)
+						cell.loadingView.hidden = true
+					})
 				}
 			})
+		} else {
+			//if the file does not exist download it from the Internet and save it
+			if let imageURL = NSURL(string: photo.imageUrl) {
+				performDownloadsAndUpdateInBackground({ () -> Void in
+					if let imageData = NSData(contentsOfURL: imageURL) {
+						//save file
+						imageData.writeToFile(NSURL(string: self.photosFilePath)!.URLByAppendingPathComponent(imageURL.lastPathComponent!).path!, atomically: true)
+						
+						performUIUpdatesOnMain({ () -> Void in
+							cell.photoCellImageView.image = UIImage(data: imageData)
+							cell.loadingView.hidden = true
+						})
+					}
+				})
+			}
 		}
 		
 		return configure(cell, forRowAtIndexPath: indexPath)
@@ -358,6 +339,20 @@ extension PhotoViewController : NSFetchedResultsControllerDelegate {
 	func controller(controller: NSFetchedResultsController, didChangeObject anObject: AnyObject, atIndexPath indexPath: NSIndexPath?, forChangeType type: NSFetchedResultsChangeType, newIndexPath: NSIndexPath?) {
 		switch type {
 		case .Delete:
+			//delete file from file system after removed from managed objecdt context
+			if let photoObject = anObject as? Photo {
+				if let imageLocation = photoObject.imageLocation {
+					if NSFileManager.defaultManager().fileExistsAtPath(imageLocation) {
+						do {
+							try NSFileManager.defaultManager().removeItemAtPath(imageLocation)
+						} catch {
+							let deleteError = error as NSError
+							print(deleteError)
+						}
+					}
+				}
+			}
+			
 			if isFetchingData {
 				photoCollectionView.reloadData()
 			} else {

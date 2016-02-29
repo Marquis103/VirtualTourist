@@ -99,17 +99,17 @@ class FlickrClient {
 	}
 	
 	private func getPhotoPageNumber(withParameters parameters:[String:AnyObject], pin:Pin, completionHandler handler: (page:Int?, error:NSError?)-> Void) {
-		var parameters = [String:AnyObject]()
-		
-		
-		//setup parameters for query
-		parameters["bbox"] = createBBox(pin.latitude as! Float, longitude: pin.longitude as! Float)
-		parameters["safe_search"] = Constants.FlickrClient.SafeSearch
-		parameters["extras"] = Constants.FlickrClient.extras
-		parameters["api_key"] = Constants.FlickrClient.APIKey
-		parameters["method"] = Constants.FlickrClient.ApiMethod
-		parameters["format"] = Constants.FlickrClient.format
-		parameters["nojsoncallback"] = Constants.FlickrClient.nojsoncallback
+//		var parameters = [String:AnyObject]()
+//		
+//		
+//		//setup parameters for query
+//		parameters["bbox"] = createBBox(pin.latitude as! Float, longitude: pin.longitude as! Float)
+//		parameters["safe_search"] = Constants.FlickrClient.SafeSearch
+//		parameters["extras"] = Constants.FlickrClient.extras
+//		parameters["api_key"] = Constants.FlickrClient.APIKey
+//		parameters["method"] = Constants.FlickrClient.ApiMethod
+//		parameters["format"] = Constants.FlickrClient.format
+//		parameters["nojsoncallback"] = Constants.FlickrClient.nojsoncallback
 		
 		guard let request = getURLFromParameters(parameters, query: nil, replaceQueryString: false) else {
 			let userInfo = [NSLocalizedDescriptionKey : "Could not generate request"]
@@ -155,6 +155,7 @@ class FlickrClient {
 		parameters["method"] = Constants.FlickrClient.ApiMethod
 		parameters["format"] = Constants.FlickrClient.format
 		parameters["nojsoncallback"] = Constants.FlickrClient.nojsoncallback
+		parameters["per_page"] = Constants.UIConstants.MaxPhotoCount
 		
 		getPhotoPageNumber(withParameters: parameters, pin: pin) { (page, error) -> Void in
 			guard error == nil else {
