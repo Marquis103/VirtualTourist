@@ -25,3 +25,9 @@ func handleBackgroundFileOperations(updates:() -> Void) {
 		updates()
 	}
 }
+
+func handleManagedObjectContextOperations(updates:() -> Void ) {
+	dispatch_async(dispatch_get_main_queue()) { () -> Void in
+		updates()
+	}
+}

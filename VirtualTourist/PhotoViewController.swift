@@ -33,14 +33,14 @@ class PhotoViewController: UIViewController {
 		photoCollectionView.dataSource = self
 		photoCollectionView.allowsMultipleSelection = true
 		
-		fetchedResultsController.delegate = self
-		
 		//set region
 		if let pin = self.pin {
+			
 			let latitude = pin.latitude as! CLLocationDegrees
 			let longitude = pin.longitude as! CLLocationDegrees
 			let center = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
 			let region = MKCoordinateRegion(center: center, span: MKCoordinateSpan(latitudeDelta: 0.05, longitudeDelta: 0.05))
+			
 			mapView.setRegion(region, animated: true)
 			
 			//drop annotation at pin
@@ -71,8 +71,9 @@ class PhotoViewController: UIViewController {
     }
 	
 	override func willAnimateRotationToInterfaceOrientation(toInterfaceOrientation: UIInterfaceOrientation, duration: NSTimeInterval) {
+		
 		//set region
-		if let pin = self.pin {
+		if let pin = pin {
 			let latitude = pin.latitude as! CLLocationDegrees
 			let longitude = pin.longitude as! CLLocationDegrees
 			let center = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
@@ -90,7 +91,6 @@ class PhotoViewController: UIViewController {
 		
 	}
 	
-	//MARK: - Shared Context
 	//MARK: - Shared Context
 	lazy var sharedContext: NSManagedObjectContext = {
 		CoreDataStack.sharedInstance.managedObjectContext
@@ -118,13 +118,15 @@ class PhotoViewController: UIViewController {
 	}()
 	
 	func loadfetchedResultsController() {
+		fetchedResultsController.delegate = self
+		
 		//get results from the fetchedResultsController
 		do {
-			try fetchedResultsController.performFetch()
+			try self.fetchedResultsController.performFetch()
 		} catch {
 			let fetchError = error as NSError
 			print("\(fetchError), \(fetchError.userInfo)")
-			alertUI(withTitle: "Failed Query", message: "Failed to load photos")
+			self.alertUI(withTitle: "Failed Query", message: "Failed to load photos")
 		}
 	}
 	
@@ -139,6 +141,8 @@ class PhotoViewController: UIViewController {
 				
 				}, completion: { (completed) -> Void in
 					performUIUpdatesOnMain({ () -> Void in
+						self.photoCollectionView.deleteItemsAtIndexPaths(self.selectedPhotos!)
+						self.selectedPhotos?.removeAll()
 						self.newCollection.setTitle("New Collection", forState: .Normal)
 					})
 			})
@@ -153,21 +157,20 @@ class PhotoViewController: UIViewController {
 					}
 					
 					CoreDataStack.sharedInstance.saveMainContext()
-					//isFetchingData = false
+					
 				}
 				}, completion: { (completed) -> Void in
+					self.isFetchingData = false
 					self.getPhotos()
 			})
 		}
 	}
 	
 	func removePhotosFromPin(indexPath:NSIndexPath) {
-		let photo = self.fetchedResultsController.objectAtIndexPath(indexPath) as! Photo
-		sharedContext.deleteObject(photo)
-		CoreDataStack.sharedInstance.saveMainContext()
-		
-		if let indexToRemove = self.selectedPhotos?.indexOf(indexPath) {
-			self.selectedPhotos?.removeAtIndex(indexToRemove)
+		handleManagedObjectContextOperations { () -> Void in
+			let photo = self.fetchedResultsController.objectAtIndexPath(indexPath) as! Photo
+			self.sharedContext.deleteObject(photo)
+			CoreDataStack.sharedInstance.saveMainContext()
 		}
 	}
 
@@ -180,54 +183,53 @@ class PhotoViewController: UIViewController {
 	
 	//MARK: - Get Photos from Flickr
 	func getPhotos(fromCache cache:Bool = false) {
-		if cache {
+		FlickrClient.sharedClient.getPhotosByLocation(using: pin!) { (result, error) -> Void in
+			guard error == nil else {
+				self.alertUI(withTitle: "Failed Query", message: "Could not retrieve images for this pin location")
+				return
+			}
 			
-		} else {
-			FlickrClient.sharedClient.getPhotosByLocation(using: pin!) { (result, error) -> Void in
-				guard error == nil else {
-					self.alertUI(withTitle: "Failed Query", message: "Could not retrieve images for this pin location")
-					return
-				}
-				
-				if let photos = result {
-					if let photosDict = photos["photos"] as? [String:AnyObject] {
-						if let photosDesc = photosDict["photo"] as? [[String:AnyObject]] {
-							self.photoURLs = [String:NSDate]()
-							let dateFormatter = NSDateFormatter()
-							dateFormatter.dateFormat = "yyyy-MM-dd hh:mm:ss"
-							for (_, photoItem) in photosDesc.enumerate() {
-								if let photoURL = photoItem["url_m"] as? String, let dateTaken = photoItem["datetaken"] as? String {
-									//photo urls of images to be downloaded
-									self.photoURLs![photoURL] = dateFormatter.dateFromString(dateTaken)
-								}
+			if let photos = result {
+				if let photosDict = photos["photos"] as? [String:AnyObject] {
+					if let photosDesc = photosDict["photo"] as? [[String:AnyObject]] {
+						self.photoURLs = [String:NSDate]()
+						let dateFormatter = NSDateFormatter()
+						dateFormatter.dateFormat = "yyyy-MM-dd hh:mm:ss"
+						for (_, photoItem) in photosDesc.enumerate() {
+							if let photoURL = photoItem["url_m"] as? String, let dateTaken = photoItem["datetaken"] as? String {
+								//photo urls of images to be downloaded
+								self.photoURLs![photoURL] = dateFormatter.dateFromString(dateTaken)
 							}
-							
-							if self.photoURLs!.keys.count > 0 {
-								//just get the images from the url
+						}
+						
+						if self.photoURLs!.keys.count > 0 {
+							handleManagedObjectContextOperations({ () -> Void in
 								for urlString in self.photoURLs!.keys {
+									
 									if let photoFileName = urlString.componentsSeparatedByString("/").last {
+										
 										let photo = Photo(context: self.sharedContext)
 										photo.imageUrl = urlString
 										photo.dateTaken = self.photoURLs![urlString]!
 										photo.pin = self.pin!
-										photo.imageLocation = NSURL(string: self.photosFilePath)!.URLByAppendingPathComponent(photoFileName).path!
+										photo.imageLocation = photoFileName
 										CoreDataStack.sharedInstance.saveMainContext()
 									}
 								}
 								
-								//save context
-								performUIUpdatesOnMain({ () -> Void in
-									self.photoCollectionView.hidden = false
-									self.newCollection.enabled = true
-								})
-							} else {
-								performUIUpdatesOnMain({ () -> Void in
-									self.photoCollectionView.hidden = true
-									self.newCollection.enabled = true
-									self.noPhotosLabel.hidden = false
-									
-								})
-							}
+								//performUIUpdatesOnMain({ () -> Void in
+								self.photoCollectionView.hidden = false
+								self.newCollection.enabled = true
+								
+							})
+							
+						} else {
+							performUIUpdatesOnMain({ () -> Void in
+								self.photoCollectionView.hidden = true
+								self.newCollection.enabled = true
+								self.noPhotosLabel.hidden = false
+								
+							})
 						}
 					}
 				}
@@ -272,10 +274,14 @@ extension PhotoViewController : UICollectionViewDataSource {
 		if let indexSet = selectedPhotos {
 			if indexSet.contains(indexPath) {
 				if cell.photoCellImageView.alpha == 1.0 {
-					cell.photoCellImageView.alpha = 0.5
+					performUIUpdatesOnMain({ () -> Void in
+						cell.photoCellImageView.alpha = 0.5
+					})
 				}
 			} else {
-				cell.photoCellImageView.alpha = 1.0
+				performUIUpdatesOnMain({ () -> Void in
+					cell.photoCellImageView.alpha = 1.0
+				})
 			}
 		}
 		
@@ -300,9 +306,10 @@ extension PhotoViewController : UICollectionViewDataSource {
 		
 		let photo = fetchedResultsController.objectAtIndexPath(indexPath) as! Photo
 		
-		//if the file does exist then load it
-		if NSFileManager.defaultManager().fileExistsAtPath(photo.imageLocation!) {
-			cell.photoCellImageView.image = UIImage(contentsOfFile: photo.imageLocation!)
+		let imageLocation = photo.imageLocation!
+		
+		if NSFileManager.defaultManager().fileExistsAtPath(NSURL(string: self.photosFilePath)!.URLByAppendingPathComponent(imageLocation).path!) {
+			cell.photoCellImageView.image = UIImage(contentsOfFile: NSURL(string: self.photosFilePath)!.URLByAppendingPathComponent(imageLocation).path!)
 			cell.loadingView.hidden = true
 		} else {
 			//if the file does not exist download it from the Internet and save it
@@ -322,7 +329,6 @@ extension PhotoViewController : UICollectionViewDataSource {
 		}
 		
 		return configure(cell, forRowAtIndexPath: indexPath)
-		
 	}
 }
 
@@ -330,11 +336,13 @@ extension PhotoViewController : NSFetchedResultsControllerDelegate {
 	func controller(controller: NSFetchedResultsController, didChangeObject anObject: AnyObject, atIndexPath indexPath: NSIndexPath?, forChangeType type: NSFetchedResultsChangeType, newIndexPath: NSIndexPath?) {
 		switch type {
 		case .Delete:
-			photoCollectionView.deleteItemsAtIndexPaths(Array(arrayLiteral: indexPath!))
+			if isFetchingData {
+				photoCollectionView.reloadData()
+			}
 			break
 			
 		case .Insert:
-			photoCollectionView.insertItemsAtIndexPaths(Array(arrayLiteral: newIndexPath!))
+			photoCollectionView.reloadData()
 			break
 			
 		default:

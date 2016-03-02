@@ -22,11 +22,14 @@ class CoreDataStack : NSObject {
 	
 	//save managed context if changes exist
 	func saveMainContext() {
-		if managedObjectContext.hasChanges {
-			do {
-				try managedObjectContext.save()
-			} catch {
-				print("There was an error saving main managed object context! \(error)")
+		handleManagedObjectContextOperations { () -> Void in
+			if self.managedObjectContext.hasChanges {
+				do {
+					try self.managedObjectContext.save()
+				} catch {
+					let saveError = error as NSError
+					print("There was an error saving main managed object context! \(saveError)")
+				}
 			}
 		}
 	}
@@ -65,12 +68,4 @@ class CoreDataStack : NSObject {
 		managedObjectContext.persistentStoreCoordinator = self.persistentStoreCoordinator
 		return managedObjectContext
 	}()
-	
-	/*lazy var memeEntity:NSEntityDescription = {
-		guard let entity = NSEntityDescription.entityForName("Meme", inManagedObjectContext: self.managedObjectContext) else {
-			fatalError("Entity could not be found!")
-		}
-		
-		return entity
-	}()*/
 }

@@ -18,6 +18,10 @@ class Photo: NSManagedObject {
 		static let imageURL = "imageUrl"
 	}
 	
+	private var photosFilePath: String {
+		return NSSearchPathForDirectoriesInDomains(.DocumentDirectory, .UserDomainMask, true).first!
+	}
+	
 	override init(entity: NSEntityDescription, insertIntoManagedObjectContext context: NSManagedObjectContext?) {
 		super.init(entity: entity, insertIntoManagedObjectContext: context)
 	}
@@ -44,17 +48,16 @@ class Photo: NSManagedObject {
 
 	override func prepareForDeletion() {
 		//delete photos from disk
-		handleBackgroundFileOperations({ () -> Void in
-			if let imageLocation = self.imageLocation {
-				if NSFileManager.defaultManager().fileExistsAtPath(imageLocation) {
-					do {
-						try NSFileManager.defaultManager().removeItemAtPath(imageLocation)
-					} catch {
-						let deleteError = error as NSError
-						print(deleteError)
-					}
+		
+		if let imageLocation = self.imageLocation {
+			if NSFileManager.defaultManager().fileExistsAtPath(NSURL(string: self.photosFilePath)!.URLByAppendingPathComponent(imageLocation).path!) {
+				do {
+					try NSFileManager.defaultManager().removeItemAtPath(NSURL(string: self.photosFilePath)!.URLByAppendingPathComponent(imageLocation).path!)
+				} catch {
+					let deleteError = error as NSError
+					print(deleteError)
 				}
 			}
-		})
+		}
 	}
 }

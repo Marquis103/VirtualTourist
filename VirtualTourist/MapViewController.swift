@@ -59,6 +59,7 @@ class MapViewController: UIViewController {
 		
 		//drop all pins from the managed object context
 		reloadPins()
+		
 	}
 	
 	override func viewWillAppear(animated: Bool) {
@@ -130,7 +131,7 @@ class MapViewController: UIViewController {
 		buttonHeight = buttonHeightConstant * CGRectGetMaxY(view.bounds)
 		
 		if buttonOnScreen {
-			self.deleteButton.hidden = !buttonOnScreen
+			deleteButton.hidden = !buttonOnScreen
 			
 			UIView.animateWithDuration(0.7, animations: { () -> Void in
 				self.mapView.frame.origin.y -= self.buttonHeight
@@ -193,8 +194,8 @@ class MapViewController: UIViewController {
 			break
 			
 		case .Ended:
-			if let pin = currentPin {
-				let pinEntity = Pin(context: sharedContext)
+			if let pin = self.currentPin {
+				let pinEntity = Pin(context: self.sharedContext)
 				pinEntity.latitude = Float(pin.coordinate.latitude)
 				pinEntity.longitude = Float(pin.coordinate.longitude)
 				pin.pin = pinEntity
@@ -205,6 +206,7 @@ class MapViewController: UIViewController {
 				//after the pin has been saved -- there is no longer a current pin
 				currentPin = nil
 			}
+			
 			break
 			
 		default:
@@ -235,16 +237,15 @@ extension MapViewController : MKMapViewDelegate {
 			//delete annotation
 			if let annotation = view.annotation as? PinAnnotation {
 				if let pin = annotation.pin {
-					//let photoSet = pin.photos ?? []
 					
 					sharedContext.deleteObject(pin)
+					
+					//save the context
+					CoreDataStack.sharedInstance.saveMainContext()
+					
+					
 					mapView.removeAnnotation(annotation)
-					
-					
 				}
-				
-				//save the context
-				CoreDataStack.sharedInstance.saveMainContext()
 			}
 		} else {
 			//get images for pin location
