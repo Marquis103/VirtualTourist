@@ -11,3 +11,6 @@ App is build using Swift 2.1, iOS 9 and XCode 7.
 ##Needed Functionality
 * Pre-fetch data on pin drop
 * Scrolling download (endless scrolling)
+
+##License
+Code released under the [MIT license](https://github.com/Marquis103/VirtualTourist/blob/master/License)
